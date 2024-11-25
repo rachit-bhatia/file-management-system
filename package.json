@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "core-js": "^3.8.3",
@@ -40,7 +41,9 @@
       "parser": "@babel/eslint-parser"
     },
     "rules": {
-      "no-unused-vars": ["none"]
+      "no-unused-vars": [
+        "none"
+      ]
     }
   },
   "browserslist": [
