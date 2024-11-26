@@ -17,52 +17,51 @@ async function uploadToS3(file, key) {
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
-        };
+    };
     
-        return s3.upload(params).promise();  //returning a promise to allow async/await
-    }
+    return s3.upload(params).promise();  //returning a promise to allow async/await
+}
 
 //file upload endpoint
-router.post('/uploadFile', upload.single('file'), async (request, response) => {
+router.post('/uploadfile', upload.single('file'), async (request, response) => {
     try {
-      const file = request.file;
-      if (!file) {
-        return response.status(400).send({ error: 'No file uploaded' });
-      }
-  
-      //generating a unique file ID and corresponding S3 key
-      const fileId = uuidv4();
-      const s3Key = `${fileId}-${file.originalname}`;
-  
-      const s3Response = await uploadToS3(file, s3Key);
-  
-      //storing metadata in a Firestore db collection
-      const fileMetadata = {
-        fileId,
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        s3Key,
-        s3Url: s3Response.Location,
-        uploadDate: new Date(),
-      };
-      await db.collection('filesMetadata').doc(fileId).set(fileMetadata);
-  
-      //sending successful response with file metadata
-      response.status(201).send({
-        message: 'File uploaded successfully',
-        fileMetadata: metadata,
-      });
+        const file = request.file;
+        if (!file) {
+            return response.status(400).send({ error: 'No file uploaded' });
+        }
+    
+        //generating a unique file ID and corresponding S3 key
+        const fileId = uuidv4();
+        const s3Key = `${fileId}-${file.originalname}`;
+    
+        const s3Response = await uploadToS3(file, s3Key);
+    
+        //storing metadata in a Firestore db collection
+        const fileMetadata = {
+            fileId,
+            fileName: file.originalname,
+            fileType: file.mimetype,
+            fileSize: file.size,
+            s3Key,
+            s3Url: s3Response.Location,
+            uploadDate: new Date(),
+        };
+        await db.collection('filesMetadata').doc(fileId).set(fileMetadata);
+    
+        //sending successful response with file metadata
+        response.status(201).send({
+            message: 'File uploaded successfully',
+            fileMetadata: fileMetadata,
+        });
 
     } catch (error) {
-      console.error('Error uploading file:', error);
-      response.status(500).send({ error: 'Failed to upload file' });
+        console.error('Error uploading file:', error);
+        response.status(500).send({ error: 'Failed to upload file' });
     }
-
-  });
+});
 
 //retrieve file metadata endpoint
-router.get('/fileData/:fileId', async (request, response) => {
+router.get('/filedata/:fileId', async (request, response) => {
     try {
       const fileId = request.params.fileId;  //extracting file ID from request params
   
@@ -80,7 +79,7 @@ router.get('/fileData/:fileId', async (request, response) => {
   });
 
 //file download endpoint
-router.get('/downloadFile/:fileId', async (request, response) => {
+router.get('/downloadfile/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
@@ -107,7 +106,7 @@ router.get('/downloadFile/:fileId', async (request, response) => {
 });
 
 //rename file endpoint
-router.put('/renameFile/:fileId', async (request, response) => {
+router.put('/renamefile/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
@@ -143,7 +142,7 @@ router.put('/renameFile/:fileId', async (request, response) => {
 });
 
 //delete file endpoint
-router.delete('/deleteFile/:fileId', async (request, response) => {
+router.delete('/deletefile/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
