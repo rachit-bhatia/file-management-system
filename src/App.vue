@@ -1,15 +1,18 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div>
+    <h1 style="position:absolute; top:60px; left:100px;">FMS Storage</h1>
+    <ViewerBound />
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+
+import ViewerBound from './components/ViewerBound.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    ViewerBound
   }
 }
 </script>
@@ -17,10 +20,12 @@ export default {
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #e6eef6;
 }
 </style>
