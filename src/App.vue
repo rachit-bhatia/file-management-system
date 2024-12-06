@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <h1 style="position:absolute; top:60px; left:100px;">FMS Storage</h1>
+  <div style="margin: 60px 100px;">
+    <h1>FMS Storage</h1>
     <div class="viewer">
       <h2>My Files</h2>
 
@@ -27,7 +27,7 @@
       </div>
 
       <FileDisplay/>
-
+      <CircularLoading v-if="loadingState"/>
     </div>
 
     <ActionMessage :message="actionMessage" :message-icon="actionMessageIcon" :style="{transform: showActionMessage ? 'translateX(-340px)' : 'initial'}"/>
@@ -39,6 +39,7 @@
 import axios from 'axios';
 import ActionMessage from './components/ActionMessage.vue';
 import FileDisplay from './components/FileDisplay.vue';
+import CircularLoading from './components/CircularLoading.vue';
 
 export default {
   name: 'App',
@@ -48,12 +49,14 @@ export default {
       actionMessage: "",
       showActionMessage: false,
       actionMessageIcon: "",
+      loadingState: false,
     }
   },
 
   components: {
     ActionMessage,
     FileDisplay,
+    CircularLoading,
   },
 
   methods: {
@@ -65,9 +68,10 @@ export default {
       const formData = new FormData();
       formData.append("file", file);
       console.log(file);
+      this.loadingState = true;
 
       try {
-        const response = await axios.post("http://localhost:3000/fm-api/uploadfile", formData, {headers: {"Content-Type": "multipart/form-data"}});
+        const response = await axios.post("http://localhost:3000/fms-api/uploadfile", formData, {headers: {"Content-Type": "multipart/form-data"}});
         console.log(response);
 
         if (response.status === 201) {
@@ -86,6 +90,8 @@ export default {
       } 
 
       finally {
+        this.loadingState = false;
+
         //display action message popup for 5 seconds
         this.showActionMessage = true;
         setTimeout(() => {
@@ -100,7 +106,7 @@ export default {
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: Arial, sans-serif;
   color: #2c3e50;
 }
 
@@ -111,12 +117,9 @@ html, body {
 }
 
 .viewer {
-  position: absolute;
-  margin: 150px 100px;
+  position: relative;
   padding: 20px 50px;
-  margin-bottom: 150px;
-  width: calc(100% - 200px);
-  height: calc(100% - 200px);
+  height: 300px;
   border-radius: 25px;
   background-color: rgb(191, 199, 205);
   box-sizing: border-box;
