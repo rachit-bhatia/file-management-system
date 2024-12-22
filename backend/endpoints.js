@@ -2,6 +2,7 @@ const multer = require('multer');
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { s3, db } = require('./serverConfig');
+const mimeDb = require('mime-db');
 
 const router = express.Router();
 
@@ -60,21 +61,52 @@ router.post('/uploadfile', upload.single('file'), async (request, response) => {
     }
 });
 
-//retrieve file metadata endpoint
-router.get('/filedata/:fileId', async (request, response) => {
+//retrieve all files metadata
+router.get('/filedata', async (request, response) => {
     try {
-      const fileId = request.params.fileId;  //extracting file ID from request params
-  
-      const fileData = await db.collection('filesMetadata').doc(fileId).get();
-      if (!fileData.exists) {
-        return response.status(404).send({ error: 'File not found' });
-      }
-  
-      response.status(200).send(fileData.data());
+        const dbSnapshot = await db.collection('filesMetadata').get();
+        const filesMetadata = [];
 
+        dbSnapshot.forEach((doc) => {
+            filesMetadata.push({...doc.data()});  //unpacking Firestore document into each object in the array
+            const fileData = filesMetadata[filesMetadata.length - 1];
+
+            fileData["fileType"] = mimeDb[fileData.fileType].extensions[0]; //retreiving file extension
+
+            //converting last modified date to human-readable format of "date month year"
+            const modifiedDate = fileData["uploadDate"].toLocaleDateString('en-US', {day: 'numeric', month: 'long', year: 'numeric'});
+            fileData["uploadDate"] = modifiedDate;
+
+            //converting file size from bytes to human-readable format
+            const sizeUnits = ["B", "KB", "MB", "GB", "TB"];
+            var fileSize = fileData.fileSize;
+            var fileSizeCounter = 0;
+            var fileSizeStr = fileSize.toString();
+
+            if (fileSizeStr.length > 3) {
+                fileSize = (fileSize / 1024).toFixed(1); //round to 1dp
+                fileSizeStr = fileSize.toString();
+                fileSizeCounter++;
+
+                while (fileSizeStr.length > 5) {
+                    fileSize = (fileSize / 1024).toFixed(1);
+                    fileSizeStr = fileSize.toString();
+                    fileSizeCounter++;
+                }
+            }
+
+            fileData["fileSize"] = `${fileSize} ${sizeUnits[fileSizeCounter]}`; 
+        });
+
+        console.log("Files retrieved: ", filesMetadata);
+        response.status(200).send({
+            message: 'Files retrieved successfully',
+            files: filesMetadata
+        });
+  
     } catch (error) {
-      console.error('Error retrieving file metadata:', error);
-      response.status(500).send({ error: 'Failed to retrieve file metadata' });
+        console.error('Error retrieving files:', error);
+        response.status(500).send({ error: 'Failed to retrieve files' });
     }
   });
 
