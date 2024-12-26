@@ -10,13 +10,13 @@
           <span class="material-icons" style="margin-left: 10px;">add_circle</span>
           <button class="action-button" @click="triggerFileSelection" title="Upload" style="padding: 15px 20px 15px 40px; border-radius: 10px;">Add File</button>
         </div> 
-        <button class="action-button" title="Delete">
+        <button class="action-button" title="Delete" :disabled="actionsDisabled">
           <span class="material-icons">delete</span>
         </button>
-        <button class="action-button" title="Rename">
+        <button class="action-button" title="Rename" :disabled="actionsDisabled">
           <span class="material-icons">edit</span>
         </button>
-        <button class="action-button" title="Download">
+        <button class="action-button" title="Download" :disabled="actionsDisabled">
           <span class="material-icons">download</span>
         </button>
 
@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <FileDisplay/>
+      <FileListView :fileList="fileList" @set-actions="setActionsMode" @set-fileId="setFileId"/>
       <CircularLoading v-if="loadingState"/>
     </div>
 
@@ -38,7 +38,7 @@
 <script>
 import axios from 'axios';
 import ActionMessage from './components/ActionMessage.vue';
-import FileDisplay from './components/FileDisplay.vue';
+import FileListView from './components/FileListView.vue';
 import CircularLoading from './components/CircularLoading.vue';
 
 export default {
@@ -50,18 +50,43 @@ export default {
       showActionMessage: false,
       actionMessageIcon: "",
       loadingState: false,
+      actionsDisabled: true,
+      fileList: [],
+      fileId: null,
     }
+  },
+
+  mounted() {
+    this.getAllFiles();
   },
 
   components: {
     ActionMessage,
-    FileDisplay,
+    FileListView,
     CircularLoading,
   },
 
   methods: {
     triggerFileSelection() {
       this.$refs.fileInput.click();
+    },
+    setActionsMode(isSelected) {
+      this.actionsDisabled = !isSelected;
+    },
+    setFileId(id) {
+      this.fileId = id;
+    },
+    async getAllFiles() {
+      this.loadingState = true;
+      try {
+        const response = await axios.get("http://localhost:3000/fms-api/filedata");
+        const fileList = response.data.files;
+        this.fileList = fileList; 
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.loadingState = false;
+      }
     },
     async uploadFile() {
       const file = this.$refs.fileInput.files[0];
@@ -119,7 +144,6 @@ html, body {
 .viewer {
   position: relative;
   padding: 20px 50px;
-  height: 300px;
   border-radius: 25px;
   background-color: rgb(191, 199, 205);
   box-sizing: border-box;
@@ -142,6 +166,15 @@ html, body {
 .action-button:hover {
   cursor: pointer;
   background-color: rgb(75, 93, 105);
+}
+
+.action-button:disabled {
+  background-color: rgba(133, 133, 133, 0.549);
+  cursor: not-allowed;
+}
+
+.action-button:active {
+  transform: scale(0.90);
 }
 
 .material-icons {
