@@ -29,7 +29,9 @@ const s3 = new aws.S3();
 
 //initialize Express App
 const app = express();
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition', 'X-Content-Title'],
+}));
 app.use(bodyParser.json());
 
 module.exports = { s3, db, app };

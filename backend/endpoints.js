@@ -74,7 +74,8 @@ router.get('/filedata', async (request, response) => {
             fileData["fileType"] = mimeDb[fileData.fileType].extensions[0]; //retreiving file extension
 
             //converting last modified date to human-readable format of "date month year"
-            const modifiedDate = fileData["uploadDate"].toLocaleDateString('en-US', {day: 'numeric', month: 'long', year: 'numeric'});
+            const date = fileData["uploadDate"].toDate();  //converting firestore timestamp to JS date object
+            const modifiedDate = date.toLocaleDateString('en-US', {day: 'numeric', month: 'long', year: 'numeric'});
             fileData["uploadDate"] = modifiedDate;
 
             //converting file size from bytes to human-readable format
@@ -98,7 +99,6 @@ router.get('/filedata', async (request, response) => {
             fileData["fileSize"] = `${fileSize} ${sizeUnits[fileSizeCounter]}`; 
         });
 
-        console.log("Files retrieved: ", filesMetadata);
         response.status(200).send({
             message: 'Files retrieved successfully',
             files: filesMetadata
@@ -129,7 +129,10 @@ router.get('/downloadfile/:fileId', async (request, response) => {
 
         response.setHeader('Content-Disposition', `attachment; filename=${fileData.fileName}`);
         response.setHeader('Content-Type', fileData.fileType);
-        fileStream.pipe(response);  //transferring the readable file stream to the writable response object and sending 200 OK response
+        response.setHeader('X-Content-Title', fileData.fileName);
+        
+        //transferring the readable file stream to the writable response object and sending 200 OK response
+        fileStream.pipe(response);
 
     } catch (error) {
         console.error('Error downloading file:', error);
