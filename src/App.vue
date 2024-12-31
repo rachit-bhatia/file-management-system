@@ -1,5 +1,5 @@
 <template>
-  <div style="margin: 60px 100px;">
+  <div style="margin: 40px 100px 0px;">
     <h1>FMS Storage</h1>
     <div class="viewer">
       <h2>My Files</h2>
@@ -10,13 +10,13 @@
           <span class="material-icons" style="margin-left: 10px;">add_circle</span>
           <button class="action-button" @click="triggerFileSelection" title="Upload" style="padding: 15px 20px 15px 40px; border-radius: 10px;">Add File</button>
         </div> 
-        <button class="action-button" title="Delete" :disabled="actionsDisabled">
+        <button class="action-button" title="Delete" @click="deleteFile" :disabled="actionsDisabled">
           <span class="material-icons">delete</span>
         </button>
         <button class="action-button" title="Rename" :disabled="actionsDisabled">
           <span class="material-icons">edit</span>
         </button>
-        <button class="action-button" title="Download" :disabled="actionsDisabled">
+        <button class="action-button" title="Download" @click="downloadFile" :disabled="actionsDisabled">
           <span class="material-icons">download</span>
         </button>
 
@@ -49,6 +49,7 @@ export default {
       actionMessage: "",
       showActionMessage: false,
       actionMessageIcon: "",
+      actionMessageDuration: 3500,
       loadingState: false,
       actionsDisabled: true,
       fileList: [],
@@ -100,7 +101,7 @@ export default {
         console.log(response);
 
         if (response.status === 201) {
-          this.actionMessage="File upload complete";
+          this.actionMessage="File uploaded successfully";
           this.actionMessageIcon="check_circle";
         } else {
           this.actionMessage="Upload failed";
@@ -115,14 +116,91 @@ export default {
       } 
 
       finally {
-        this.loadingState = false;
+        this.getAllFiles();
 
-        //display action message popup for 5 seconds
+        //display action message popup for 3.5 seconds
         this.showActionMessage = true;
         setTimeout(() => {
           this.showActionMessage = false;
           this.actionMessage = "";
-        }, 5000);
+        }, this.actionMessageDuration);
+      }
+    },
+    async deleteFile() {
+      const fileId = this.fileId;
+      this.loadingState = true;
+
+      try {
+        const response = await axios.delete(`http://localhost:3000/fms-api/deletefile/${fileId}`);
+        console.log(response);
+
+        if (response.status === 200) {
+          this.actionMessage="File deleted";
+          this.actionMessageIcon="delete_forever";
+        } else {
+          this.actionMessage="Unable to delete file";
+          this.actionMessageIcon="cancel";
+        }
+      } 
+      
+      catch (error) {
+        console.log(error);
+        this.actionMessage="Unable to delete file";
+        this.actionMessageIcon="cancel";
+      } 
+
+      finally {
+        this.getAllFiles();
+
+        this.showActionMessage = true;
+        setTimeout(() => {
+          this.showActionMessage = false;
+          this.actionMessage = "";
+        }, this.actionMessageDuration);
+      }
+    },
+    async downloadFile() {
+      const fileId = this.fileId;
+
+      try {
+        this.loadingState = true;
+        const response = await axios.get(`http://localhost:3000/fms-api/downloadfile/${fileId}`, 
+                                         {responseType: 'blob'},  //returning response as blob to enable downloading
+                                        );
+        console.log(response);
+
+        if (response.status === 200) {
+          const urlObject = URL.createObjectURL(response.data);
+          const anchorTag = document.createElement('a');
+          anchorTag.href = urlObject;
+          anchorTag.download = response.headers['x-content-title'];  //setting a.download makes the file downloadable when clicked and sets the saved file's name 
+
+          //appending the <a>, triggerring the click, and removing it
+          document.body.appendChild(anchorTag);
+          anchorTag.click();  //triggers the file save menu
+          document.body.removeChild(anchorTag);
+          URL.revokeObjectURL(urlObject);
+
+        } else {
+          this.actionMessage="File download failed";
+          this.actionMessageIcon="cancel";
+          this.showActionMessage = true;
+        }
+      } 
+      
+      catch (error) {
+        console.log(error);
+        this.actionMessage="File download failed";
+        this.actionMessageIcon="cancel";
+        this.showActionMessage = true;
+      } 
+
+      finally {
+        this.loadingState = false;
+        setTimeout(() => {
+          this.showActionMessage = false;
+          this.actionMessage = "";
+        }, this.actionMessageDuration);
       }
     }
   }
