@@ -10,7 +10,7 @@
           <span class="material-icons" style="margin-left: 10px;">add_circle</span>
           <button class="action-button" @click="triggerFileSelection" title="Upload" style="padding: 15px 20px 15px 40px; border-radius: 10px;">Add File</button>
         </div> 
-        <button class="action-button" title="Delete" @click="deleteFile" :disabled="actionsDisabled">
+        <button class="action-button" title="Delete" @click="displayDeletePopup" :disabled="actionsDisabled">
           <span class="material-icons">delete</span>
         </button>
         <button class="action-button" title="Rename" :disabled="actionsDisabled">
@@ -30,7 +30,16 @@
       <CircularLoading v-if="loadingState"/>
     </div>
 
-    <ActionMessage :message="actionMessage" :message-icon="actionMessageIcon" :style="{transform: showActionMessage ? 'translateX(-340px)' : 'initial'}"/>
+    <PopupModal v-if="showPopup" 
+                :isWarning="this.popupProps.isWarning"
+                :modalText="this.popupProps.modalText"
+                :modalHeader="this.popupProps.modalHeader"
+                @disable-popup="() => {this.showPopup = false;}"
+                @invoke-action="this.popupProps.action"/>
+
+    <ActionMessage :message="actionMessage" 
+                   :message-icon="actionMessageIcon" 
+                   :style="{transform: showActionMessage ? 'translateX(-340px)' : 'initial'}"/>
   </div>
 </template>
 
@@ -40,6 +49,7 @@ import axios from 'axios';
 import ActionMessage from './components/ActionMessage.vue';
 import FileListView from './components/FileListView.vue';
 import CircularLoading from './components/CircularLoading.vue';
+import PopupModal from './components/PopupModal.vue';
 
 export default {
   name: 'App',
@@ -54,6 +64,14 @@ export default {
       actionsDisabled: true,
       fileList: [],
       fileId: null,
+      showPopup: true,
+      popupProps: {
+        // modalText: "Warning! This action cannot be undone.",
+        modalText: "",
+        modalHeader: "",
+        isWarning: true,
+        action: null,
+      },
     }
   },
 
@@ -65,6 +83,7 @@ export default {
     ActionMessage,
     FileListView,
     CircularLoading,
+    PopupModal,
   },
 
   methods: {
@@ -126,7 +145,15 @@ export default {
         }, this.actionMessageDuration);
       }
     },
+    displayDeletePopup() {
+      this.showPopup = true;
+      this.popupProps.isWarning = true;
+      this.popupProps.modalHeader = "Delete File";
+      this.popupProps.modalText = "Deleting this file will permanently remove it from the system. This action cannot be undone.";
+      this.popupProps.action = this.deleteFile;
+    },
     async deleteFile() {
+      this.showPopup = false;
       const fileId = this.fileId;
       this.loadingState = true;
 
@@ -136,7 +163,7 @@ export default {
 
         if (response.status === 200) {
           this.actionMessage="File deleted";
-          this.actionMessageIcon="delete_forever";
+          this.actionMessageIcon="delete";
         } else {
           this.actionMessage="Unable to delete file";
           this.actionMessageIcon="cancel";
