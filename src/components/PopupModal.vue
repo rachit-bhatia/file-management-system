@@ -3,7 +3,11 @@
         <div class="modal">
             <h3>{{ isWarning ? "Are you sure?" : modalHeader }}</h3>
             <p v-if="modalText" class="modal-text">{{ modalText }}</p>
-            <input v-else class="searchbar" type="text"/>
+            <input v-else 
+                   class="searchbar" 
+                   type="text"
+                   v-model="fileName"
+                   style="margin-bottom: 35px; width: 92%; padding-left: 20px;"/>
             <div class="modal-button-container">
                 <button class="modal-button" 
                         @click="() => {this.$emit('disable-popup');}">
@@ -11,7 +15,7 @@
                 </button>
                 <button class="modal-button" 
                         :style="{backgroundColor: isWarning ? 'rgb(180, 50, 50)' : 'rgb(104, 130, 147)'}"
-                        @click="() => {this.$emit('invoke-action');}">
+                        @click="() => {this.fileName ? this.$emit('invoke-action', this.fileName) : this.$emit('invoke-action');}">
                             Confirm
                 </button>
             </div>
@@ -35,7 +39,16 @@
                 type: String,
                 optional: true,
             },
+            originalFileName: {
+                type: String,
+                optional: true,
+            }
         },
+        data() {
+            return {
+                fileName: this.originalFileName,
+            }
+        }
     }
 </script>
 

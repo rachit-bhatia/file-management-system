@@ -13,7 +13,7 @@
         <button class="action-button" title="Delete" @click="displayDeletePopup" :disabled="actionsDisabled">
           <span class="material-icons">delete</span>
         </button>
-        <button class="action-button" title="Rename" :disabled="actionsDisabled">
+        <button class="action-button" title="Rename" @click="displayRenamePopup" :disabled="actionsDisabled">
           <span class="material-icons">edit</span>
         </button>
         <button class="action-button" title="Download" @click="downloadFile" :disabled="actionsDisabled">
@@ -34,6 +34,7 @@
                 :isWarning="this.popupProps.isWarning"
                 :modalText="this.popupProps.modalText"
                 :modalHeader="this.popupProps.modalHeader"
+                :originalFileName="this.popupProps.originalFileName"
                 @disable-popup="() => {this.showPopup = false;}"
                 @invoke-action="this.popupProps.action"/>
 
@@ -64,12 +65,12 @@ export default {
       actionsDisabled: true,
       fileList: [],
       fileId: null,
-      showPopup: true,
+      showPopup: false,
       popupProps: {
-        // modalText: "Warning! This action cannot be undone.",
-        modalText: "",
-        modalHeader: "",
         isWarning: true,
+        modalText: "Warning! This action cannot be undone.",
+        modalHeader: "",
+        originalFileName: "",
         action: null,
       },
     }
@@ -90,12 +91,15 @@ export default {
     triggerFileSelection() {
       this.$refs.fileInput.click();
     },
+    
     setActionsMode(isSelected) {
       this.actionsDisabled = !isSelected;
     },
+
     setFileId(id) {
       this.fileId = id;
     },
+
     async getAllFiles() {
       this.loadingState = true;
       try {
@@ -108,6 +112,7 @@ export default {
         this.loadingState = false;
       }
     },
+
     async uploadFile() {
       const file = this.$refs.fileInput.files[0];
       const formData = new FormData();
@@ -145,13 +150,16 @@ export default {
         }, this.actionMessageDuration);
       }
     },
+
     displayDeletePopup() {
       this.showPopup = true;
       this.popupProps.isWarning = true;
       this.popupProps.modalHeader = "Delete File";
       this.popupProps.modalText = "Deleting this file will permanently remove it from the system. This action cannot be undone.";
+      this.popupProps.originalFileName = "";
       this.popupProps.action = this.deleteFile;
     },
+
     async deleteFile() {
       this.showPopup = false;
       const fileId = this.fileId;
@@ -165,14 +173,14 @@ export default {
           this.actionMessage="File deleted";
           this.actionMessageIcon="delete";
         } else {
-          this.actionMessage="Unable to delete file";
+          this.actionMessage="Error deleting file";
           this.actionMessageIcon="cancel";
         }
       } 
       
       catch (error) {
         console.log(error);
-        this.actionMessage="Unable to delete file";
+        this.actionMessage="Error deleting file";
         this.actionMessageIcon="cancel";
       } 
 
@@ -186,6 +194,7 @@ export default {
         }, this.actionMessageDuration);
       }
     },
+
     async downloadFile() {
       const fileId = this.fileId;
 
@@ -229,7 +238,81 @@ export default {
           this.actionMessage = "";
         }, this.actionMessageDuration);
       }
-    }
+    },
+
+    async displayRenamePopup() {
+      this.popupProps.isWarning = false;
+      this.popupProps.modalHeader = "Rename File";
+      this.popupProps.modalText = "";
+      
+      const fileId = this.fileId;
+
+      try {
+        const response = await axios.get(`http://localhost:3000/fms-api/filedata/${fileId}`);
+
+        if (response.status == 200) {
+          const originalName = response.data.fileMetadata.fileName;
+          const fileNameStripped = originalName.substring(0, originalName.lastIndexOf("."));  //stripping the file extension
+          this.popupProps.originalFileName = fileNameStripped;
+          this.popupProps.action = this.renameFile;
+          this.showPopup = true;
+        }
+        console.log(response);
+
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async renameFile(newFileName) {
+      const fileId = this.fileId;
+      this.showPopup = false;
+      var newFileNameFull = "";
+
+      try {
+        const response = await axios.get(`http://localhost:3000/fms-api/filedata/${fileId}`);
+
+        if (response.status == 200) {
+          const originalName = response.data.fileMetadata.fileName;
+          const fileExtension = originalName.substring(originalName.lastIndexOf(".") + 1); //extracting the file extension
+          newFileNameFull = `${newFileName}.${fileExtension}`;
+          console.log("New file name: ", newFileNameFull);
+        }
+        console.log(response);
+
+      } catch (error) {
+        console.log(error);
+      }
+
+      try {
+        const response = await axios.put(`http://localhost:3000/fms-api/renamefile/${fileId}`, {newFileName: newFileNameFull});
+        console.log(response);
+
+        if (response.status === 200) {
+          this.actionMessage="File renamed successfully";
+          this.actionMessageIcon="check_circle";
+        } else {
+          this.actionMessage="Error renaming file";
+          this.actionMessageIcon="cancel";
+        }
+      } 
+      
+      catch (error) {
+        console.log(error);
+        this.actionMessage="Error renaming file";
+        this.actionMessageIcon="cancel";
+      } 
+
+      finally {
+        this.getAllFiles();
+
+        this.showActionMessage = true;
+        setTimeout(() => {
+          this.showActionMessage = false;
+          this.actionMessage = "";
+        }, this.actionMessageDuration);
+      }
+    },
   }
 }
 </script>
