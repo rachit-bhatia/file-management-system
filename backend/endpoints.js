@@ -61,6 +61,28 @@ router.post('/uploadfile', upload.single('file'), async (request, response) => {
     }
 });
 
+//retrieve metadata of a specific file
+router.get('/filedata/:fileId', async (request, response) => {
+    try {
+        const fileId = request.params.fileId;   //extracting file ID from request params
+
+        const fileData = await db.collection('filesMetadata').doc(fileId).get();
+        if (!fileData.exists) {
+            return response.status(404).send({ error: 'File not found' });
+        }
+
+        const fileMetadata = fileData.data();
+        response.status(200).send({
+            message: 'File metadata retrieved successfully',
+            fileMetadata: fileMetadata
+        });
+
+    } catch (error) {
+        console.error('Error retrieving file metadata:', error);
+        response.status(500).send({ error: 'Failed to retrieve file metadata' });
+    }
+});  
+
 //retrieve all files metadata
 router.get('/filedata', async (request, response) => {
     try {
