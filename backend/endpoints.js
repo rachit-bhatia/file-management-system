@@ -93,7 +93,7 @@ router.get('/filedata', async (request, response) => {
             filesMetadata.push({...doc.data()});  //unpacking Firestore document into each object in the array
             const fileData = filesMetadata[filesMetadata.length - 1];
 
-            fileData["fileType"] = mimeDb[fileData.fileType].extensions[0]; //retreiving file extension
+            fileData["fileType"] = mimeDb[fileData.fileType] ? mimeDb[fileData.fileType].extensions[0] : "-"; //retreiving file extension
 
             //converting last modified date to human-readable format of "date month year"
             const date = fileData["uploadDate"].toDate();  //converting firestore timestamp to JS date object
