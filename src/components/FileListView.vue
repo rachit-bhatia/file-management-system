@@ -17,7 +17,7 @@
                         @click="(event) => {handleFileSelection(event)}">
                             <td><p class="file-data">{{ file.fileName }}</p></td>
                             <td><p class="file-data">{{ file.fileType }}</p></td>
-                            <td><p class="file-data">{{ file.uploadDate }}</p></td>
+                            <td><p class="file-data">{{ file.lastModified }}</p></td>
                             <td><p class="file-data">{{ file.fileSize }}</p></td>
                     </tr>
                 </tbody>

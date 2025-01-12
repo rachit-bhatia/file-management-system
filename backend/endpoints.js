@@ -45,7 +45,7 @@ router.post('/uploadfile', upload.single('file'), async (request, response) => {
             fileSize: file.size,
             s3Key,
             s3Url: s3Response.Location,
-            uploadDate: new Date(),
+            lastModified: new Date(),
         };
         await db.collection('filesMetadata').doc(fileId).set(fileMetadata);
     
@@ -86,7 +86,7 @@ router.get('/filedata/:fileId', async (request, response) => {
 //retrieve all files metadata
 router.get('/filedata', async (request, response) => {
     try {
-        const dbSnapshot = await db.collection('filesMetadata').get();
+        const dbSnapshot = await db.collection('filesMetadata').orderBy('lastModified', 'desc').get();
         const filesMetadata = [];
 
         dbSnapshot.forEach((doc) => {
@@ -96,9 +96,9 @@ router.get('/filedata', async (request, response) => {
             fileData["fileType"] = mimeDb[fileData.fileType] ? mimeDb[fileData.fileType].extensions[0] : "-"; //retreiving file extension
 
             //converting last modified date to human-readable format of "date month year"
-            const date = fileData["uploadDate"].toDate();  //converting firestore timestamp to JS date object
+            const date = fileData["lastModified"].toDate();  //converting firestore timestamp to JS date object
             const modifiedDate = date.toLocaleDateString('en-US', {day: 'numeric', month: 'long', year: 'numeric'});
-            fileData["uploadDate"] = modifiedDate;
+            fileData["lastModified"] = modifiedDate;
 
             //converting file size from bytes to human-readable format
             const sizeUnits = ["B", "KB", "MB", "GB", "TB"];
@@ -187,6 +187,7 @@ router.put('/renamefile/:fileId', async (request, response) => {
         //updating file metadata in Firestore
         await db.collection('filesMetadata').doc(fileId).update({
             fileName: newFileName,
+            lastModified: new Date(),
             s3Key: newS3Key,
         });
 
