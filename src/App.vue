@@ -20,10 +20,10 @@
           <span class="material-icons">download</span>
         </button>
 
-        <div style="margin-left: auto; width: 40%; display: flex; align-items: center;">
+        <!-- <div style="margin-left: auto; width: 40%; display: flex; align-items: center;">
           <span class="material-icons" style="color: rgb(75, 93, 105); margin-left: 10px;">search</span>
           <input class="searchbar" type="text" placeholder="Search files"/>
-        </div>
+        </div> -->
       </div>
 
       <FileListView :fileList="fileList" @set-actions="setActionsMode" @set-fileId="setFileId"/>
