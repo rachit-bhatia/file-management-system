@@ -10,6 +10,7 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() }); //using memory storage for temporary file handling
 
 const s3Bucket = process.env.AWS_S3_BUCKET;
+const firebaseCollection = process.env.FIREBASE_COLLECTION_NAME;
 
 //uploading a file to S3
 async function uploadToS3(file, key) {
@@ -47,7 +48,7 @@ router.post('/uploadfile', upload.single('file'), async (request, response) => {
             s3Url: s3Response.Location,
             lastModified: new Date(),
         };
-        await db.collection('filesMetadata').doc(fileId).set(fileMetadata);
+        await db.collection(firebaseCollection).doc(fileId).set(fileMetadata);
     
         //sending successful response with file metadata
         response.status(201).send({
@@ -66,7 +67,7 @@ router.get('/filedata/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
-        const fileData = await db.collection('filesMetadata').doc(fileId).get();
+        const fileData = await db.collection(firebaseCollection).doc(fileId).get();
         if (!fileData.exists) {
             return response.status(404).send({ error: 'File not found' });
         }
@@ -86,7 +87,7 @@ router.get('/filedata/:fileId', async (request, response) => {
 //retrieve all files metadata
 router.get('/filedata', async (request, response) => {
     try {
-        const dbSnapshot = await db.collection('filesMetadata').orderBy('lastModified', 'desc').get();
+        const dbSnapshot = await db.collection(firebaseCollection).orderBy('lastModified', 'desc').get();
         const filesMetadata = [];
 
         dbSnapshot.forEach((doc) => {
@@ -137,7 +138,7 @@ router.get('/downloadfile/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
-        let fileData = await db.collection('filesMetadata').doc(fileId).get();
+        let fileData = await db.collection(firebaseCollection).doc(fileId).get();
         if (!fileData.exists) {
             return response.status(404).send({ error: 'File not found' });
         }
@@ -167,7 +168,7 @@ router.put('/renamefile/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
-        let fileData = await db.collection('filesMetadata').doc(fileId).get();
+        let fileData = await db.collection(firebaseCollection).doc(fileId).get();
         if (!fileData.exists) {
             return response.status(404).send({ error: 'File not found' });
         }
@@ -185,7 +186,7 @@ router.put('/renamefile/:fileId', async (request, response) => {
         await s3.deleteObject({Bucket: s3Bucket, Key: fileData.s3Key}).promise();
 
         //updating file metadata in Firestore
-        await db.collection('filesMetadata').doc(fileId).update({
+        await db.collection(firebaseCollection).doc(fileId).update({
             fileName: newFileName,
             lastModified: new Date(),
             s3Key: newS3Key,
@@ -204,7 +205,7 @@ router.delete('/deletefile/:fileId', async (request, response) => {
     try {
         const fileId = request.params.fileId;   //extracting file ID from request params
 
-        let fileData = await db.collection('filesMetadata').doc(fileId).get();
+        let fileData = await db.collection(firebaseCollection).doc(fileId).get();
         if (!fileData.exists) {
             return response.status(404).send({ error: 'File not found' });
         }
@@ -213,7 +214,7 @@ router.delete('/deletefile/:fileId', async (request, response) => {
     
         //deleting file from s3 and Firestore
         await s3.deleteObject({Bucket: s3Bucket, Key: fileData.s3Key}).promise();
-        await db.collection('filesMetadata').doc(fileId).delete();
+        await db.collection(firebaseCollection).doc(fileId).delete();
     
         response.status(200).send({ message: 'File deleted successfully' });
 
