@@ -9,13 +9,6 @@ This project is a File Management System built using Vue.js, Express.js, Firebas
 - Responsive Frontend: Built using Vue.js for a seamless user experience.
 - REST API Backend: Developed using Express.js.
 
-### App Samples
-<div style="display: flex; flex-direction: row; justify-content: space-between;">
-  <img src="./sample_imgs/Main%20Screen%20Sample.png" alt="Main Screen Image" style="padding-right: 20px;"/>
-  <img src="./sample_imgs/File%20Upload%20Sample.png" alt="File Upload Image" style="padding-right: 20px;"/>
-  <img src="./sample_imgs/File%20Delete%20Sample.png" alt="File Delete Image" style="padding-right: 20px;"/>
-</div>
-
 ### Pre-requisites
 To run the project locally, you need:
 - Node.js installed on your system
@@ -55,4 +48,10 @@ npm install
 npm run dev
 ```
 
+### App Samples
+<div style="display: flex; flex-direction: row;">
+  <img src="./sample_imgs/Main%20Screen%20Sample.png" alt="Main Screen Image" style="width: 700px; padding: 20px;"/>
+  <img src="./sample_imgs/File%20Upload%20Sample.png" alt="File Upload Image" style="width: 700px; padding: 20px;"/>
+  <img src="./sample_imgs/File%20Delete%20Sample.png" alt="File Delete Image" style="width: 700px; padding: 20px;"/>
+</div>
 
